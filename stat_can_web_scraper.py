@@ -15,14 +15,14 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def array_number_fetch():
+def get_number_of_sources():
     page = requests.get('https://www150.statcan.gc.ca/n1/en/type/data')
     soup = BeautifulSoup(page.text, 'lxml')
     result = re.search(r'\((.*?)\)', soup.summary.get_text()).group(1)
     return int(result.replace(',', ''))
 
 
-number_of_sources = array_number_fetch()
+number_of_sources = get_number_of_sources()
 data = []
 for i in range(1+number_of_sources // 100):
     GENERIC_URL = 'https://www150.statcan.gc.ca/n1/en/type/data?count=100&p={}-All#all'
