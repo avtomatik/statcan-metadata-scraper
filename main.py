@@ -13,6 +13,7 @@ import re
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from pandas import DataFrame
 
 
 def get_number_of_sources(
@@ -38,29 +39,31 @@ def get_number_of_sources(
     return int(result.replace(',', ''))
 
 
-def main(
-    url_generic: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count=100&p={}-All#all',
-    file_name: str = 'stat_can_all.xlsx',
-) -> None:
+def collect_data(
+    url_generic: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
+    sources_per_page: int = 100,
+) -> list[dict]:
     """
-    Builds Resulting DataFrame and Dumps It To Excel File
+    Collects Data List
 
     Parameters
     ----------
     url_generic : str, optional
-        DESCRIPTION. The default is 'https://www150.statcan.gc.ca/n1/en/type/data?count=100&p={}-All#all'.
-    file_name : str, optional
-        DESCRIPTION. The default is 'stat_can_all.xlsx'.
+        DESCRIPTION. The default is 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all'.
+    sources_per_page : int, optional
+        DESCRIPTION. The default is 100.
 
     Returns
     -------
-    None
+    list[dict]
     """
     number_of_sources = get_number_of_sources()
     data_list = []
-    for _ in range(1 + number_of_sources // 100):
-        page = requests.get(url_generic.format(_))
-        print(f'Parsing Page {1 + _:3} Out of {1 + number_of_sources // 100}')
+    for _ in range(1 + number_of_sources // sources_per_page):
+        print(
+            f'Parsing Page {1 + _:3} Out of {1 + number_of_sources // sources_per_page}'
+        )
+        page = requests.get(url_generic.format(sources_per_page, _))
         soup = BeautifulSoup(page.text, 'lxml')
         details_soup = soup.find('details', id='all')
         items = details_soup.find_all('li', {'class': 'ndm-item'})
@@ -86,7 +89,11 @@ def main(
                     'ref': item.a.get('href'),
                 }
             )
+    print('Parsing Complete')
+    return data_list
 
+
+def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
     data = pd.DataFrame.from_dict(data_list)
     data[['id', 'title_only']] = data.iloc[:, 0].str.split(
         pat='. ',
@@ -94,7 +101,15 @@ def main(
         expand=True
     )
     data['id'] = pd.to_numeric(data['id'].str.replace(',', ''))
-    data.fillna('None').to_excel(file_name, index=False)
+    data['release_date'] = pd.to_datetime(
+        data['release_date'],
+        infer_datetime_format=False
+    )
+    return data.fillna('None')
+
+
+def main(file_name: str = 'stat_can_all.xlsx') -> None:
+    build_preprocess_dataframe(collect_data()).to_excel(file_name, index=False)
 
 
 if __name__ == '__main__':
