@@ -17,7 +17,7 @@ from pandas import DataFrame
 
 
 def get_number_of_sources(
-        url: str = 'https://www150.statcan.gc.ca/n1/en/type/data'
+    url: str = 'https://www150.statcan.gc.ca/n1/en/type/data'
 ) -> int:
     """
     Retrieves Number of STATCAN Sources
