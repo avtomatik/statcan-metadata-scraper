@@ -10,6 +10,7 @@ Created on Thu Aug  5 21:59:20 2021
 # STATCAN Sources Metadata Grabber through Web Scraping
 # =============================================================================
 import re
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -56,6 +57,7 @@ def collect_data(
     Returns
     -------
     list[dict]
+
     """
     number_of_sources = get_number_of_sources()
     data_list = []
@@ -94,8 +96,20 @@ def collect_data(
 
 
 def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
+    """
+    Builds DataFrame from Collected Data List
+
+    Parameters
+    ----------
+    data_list : list[dict]
+
+    Returns
+    -------
+    DataFrame
+
+    """
     data = pd.DataFrame.from_dict(data_list)
-    data[['id', 'title_only']] = data.iloc[:, 0].str.split(
+    data[['id', 'title_only']] = data['title'].str.split(
         pat='. ',
         n=1,
         expand=True
@@ -108,7 +122,20 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
     return data.fillna('None')
 
 
-def main(file_name: str = 'stat_can_all.xlsx') -> None:
+def main(file_name: str = 'stat_can_data_sources.xlsx') -> None:
+    """
+    Main Function to Export Collected DataFrame to Excel File
+
+    Parameters
+    ----------
+    file_name : str, optional
+        DESCRIPTION. The default is 'stat_can_data_sources.xlsx'.
+
+    Returns
+    -------
+    None
+
+    """
     build_preprocess_dataframe(collect_data()).to_excel(file_name, index=False)
 
 
