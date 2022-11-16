@@ -9,6 +9,7 @@ Created on Thu Aug  5 21:59:20 2021
 # =============================================================================
 # STATCAN Sources Metadata Grabber through Web Scraping
 # =============================================================================
+import datetime
 import re
 
 import pandas as pd
@@ -122,14 +123,14 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
     return data.fillna('None')
 
 
-def main(file_name: str = 'stat_can_data_sources.xlsx') -> None:
+def main(file_name: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx') -> None:
     """
     Main Function to Export Collected DataFrame to Excel File
 
     Parameters
     ----------
     file_name : str, optional
-        DESCRIPTION. The default is 'stat_can_data_sources.xlsx'.
+        DESCRIPTION. The default is f'stat_can_data_sources-{datetime.date.today()}.xlsx'.
 
     Returns
     -------
