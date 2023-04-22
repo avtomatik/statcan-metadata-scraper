@@ -41,7 +41,7 @@ def get_number_of_sources(
     return int(result.replace(',', ''))
 
 
-def collect_data(
+def combine_data(
     url_generic: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
     sources_per_page: int = 100,
 ) -> list[dict]:
@@ -92,7 +92,7 @@ def collect_data(
                     'ref': item.a.get('href'),
                 }
             )
-    print('Parsing Complete')
+    print("Parsing Complete")
     return data_list
 
 
@@ -109,7 +109,7 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
     DataFrame
 
     """
-    data = pd.DataFrame.from_dict(data_list)
+    data = DataFrame.from_dict(data_list)
     data[['id', 'title_only']] = data['title'].str.split(
         pat='. ',
         n=1,
@@ -123,13 +123,13 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
     return data.fillna('None')
 
 
-def main(file_name: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx') -> None:
+def main(excel_writer: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx') -> None:
     """
     Main Function to Export Collected DataFrame to Excel File
 
     Parameters
     ----------
-    file_name : str, optional
+    excel_writer : str, optional
         DESCRIPTION. The default is f'stat_can_data_sources-{datetime.date.today()}.xlsx'.
 
     Returns
@@ -137,7 +137,7 @@ def main(file_name: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx')
     None
 
     """
-    build_preprocess_dataframe(collect_data()).to_excel(file_name, index=False)
+    build_preprocess_dataframe(combine_data()).to_excel(excel_writer, index=False)
 
 
 if __name__ == '__main__':
