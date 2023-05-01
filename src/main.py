@@ -6,11 +6,13 @@ Created on Thu Aug  5 21:59:20 2021
 @author: Alexander Mikhailov
 """
 
+
 # =============================================================================
 # STATCAN Sources Metadata Grabber through Web Scraping
 # =============================================================================
 import datetime
 import re
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -123,7 +125,10 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
     return data.fillna('None')
 
 
-def main(excel_writer: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx') -> None:
+def main(
+    file_name: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx',
+    path_exp: str = '../data'
+) -> None:
     """
     Main Function to Export Collected DataFrame to Excel File
 
@@ -137,7 +142,12 @@ def main(excel_writer: str = f'stat_can_data_sources-{datetime.date.today()}.xls
     None
 
     """
-    build_preprocess_dataframe(combine_data()).to_excel(excel_writer, index=False)
+    kwargs = {
+        'excel_writer': Path(path_exp).joinpath(file_name),
+        'index': False
+    }
+    Path(path_exp).mkdir()
+    build_preprocess_dataframe(combine_data()).to_excel(**kwargs)
 
 
 if __name__ == '__main__':
