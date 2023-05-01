@@ -146,7 +146,7 @@ def main(
         'excel_writer': Path(path_exp).joinpath(file_name),
         'index': False
     }
-    Path(path_exp).mkdir()
+    Path(path_exp).mkdir(exist_ok=True)
     build_preprocess_dataframe(combine_data()).to_excel(**kwargs)
 
 
