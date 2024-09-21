@@ -10,14 +10,14 @@ Created on Thu Aug  5 21:59:20 2021
 # =============================================================================
 # STATCAN Sources Metadata Grabber through Web Scraping
 # =============================================================================
-import datetime
+
 import re
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from pandas import DataFrame
 
 
 def get_number_of_sources(
@@ -94,11 +94,11 @@ def combine_data(
                     'ref': item.a.get('href'),
                 }
             )
-    print("Parsing Complete")
+    print('Parsing Complete')
     return data_list
 
 
-def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
+def build_preprocess_dataframe(data_list: list[dict]) -> pd.DataFrame:
     """
     Builds DataFrame from Collected Data List
 
@@ -108,10 +108,10 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
 
     Returns
     -------
-    DataFrame
+    pd.DataFrame
 
     """
-    data = DataFrame.from_dict(data_list)
+    data = pd.DataFrame.from_dict(data_list)
     data[['id', 'title_only']] = data['title'].str.split(
         pat='. ',
         n=1,
@@ -126,7 +126,7 @@ def build_preprocess_dataframe(data_list: list[dict]) -> DataFrame:
 
 
 def main(
-    file_name: str = f'stat_can_data_sources-{datetime.date.today()}.xlsx',
+    file_name: str,
     path_exp: str = '../data'
 ) -> None:
     """
@@ -135,20 +135,20 @@ def main(
     Parameters
     ----------
     excel_writer : str, optional
-        DESCRIPTION. The default is f'stat_can_data_sources-{datetime.date.today()}.xlsx'.
+        DESCRIPTION. The default is f'stat_can_data_sources-{date.today()}.xlsx'.
 
     Returns
     -------
     None
 
     """
-    kwargs = {
-        'excel_writer': Path(path_exp).joinpath(file_name),
-        'index': False
-    }
     Path(path_exp).mkdir(exist_ok=True)
-    build_preprocess_dataframe(combine_data()).to_excel(**kwargs)
+    build_preprocess_dataframe(combine_data()).to_excel(
+        excel_writer=Path(path_exp).joinpath(file_name),
+        index=False
+    )
 
 
 if __name__ == '__main__':
-    main()
+    file_name = f'stat_can_data_sources-{date.today()}.xlsx'
+    main(file_name)

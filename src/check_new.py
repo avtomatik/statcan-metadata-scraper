@@ -28,7 +28,7 @@ def url_to_archive_name(url: str) -> str:
         DESCRIPTION.
 
     """
-    return f"{url.split('?pid=')[1][:-2]}-eng.zip"
+    return f'{url.split("?pid=")[1][:-2]}-eng.zip'
 
 
 def get_archive_names(file_name: str, path_src: str = '../data') -> set[str]:
