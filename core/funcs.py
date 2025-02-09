@@ -4,17 +4,12 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
+from scraper.settings import ENDPOINT
 
-def get_number_of_sources(
-    url: str = 'https://www150.statcan.gc.ca/n1/en/type/data'
-) -> int:
+
+def get_number_of_sources() -> int:
     """
     Retrieves Number of STATCAN Sources
-
-    Parameters
-    ----------
-    url : str, optional
-        Link. The default is 'https://www150.statcan.gc.ca/n1/en/type/data'.
 
     Returns
     -------
@@ -22,14 +17,14 @@ def get_number_of_sources(
         Number of STATCAN Sources.
 
     """
-    page = requests.get(url)
+    page = requests.get(ENDPOINT)
     soup = BeautifulSoup(page.text, 'lxml')
     result = re.search(r'\((.*?)\)', soup.summary.get_text()).group(1)
     return int(result.replace(',', ''))
 
 
 def combine_data(
-    url_generic: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
+    url_generic: str = '{ENDPOINT}?count={}&p={}-All#all',
     sources_per_page: int = 100,
 ) -> list[dict]:
     """
@@ -38,7 +33,7 @@ def combine_data(
     Parameters
     ----------
     url_generic : str, optional
-        DESCRIPTION. The default is 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all'.
+        DESCRIPTION. The default is '{ENDPOINT}?count={}&p={}-All#all'.
     sources_per_page : int, optional
         DESCRIPTION. The default is 100.
 
@@ -51,7 +46,7 @@ def combine_data(
     data_list = []
     for _ in range(1 + number_of_sources // sources_per_page):
         print(
-            f'Parsing Page {1 + _:3} Out of {1 + number_of_sources // sources_per_page}'
+            f'Parsing Page {1 + _:3} Out of {1 + number_of_sources // sources_per_page}'  # noqa: E501
         )
         page = requests.get(url_generic.format(sources_per_page, _))
         soup = BeautifulSoup(page.text, 'lxml')
@@ -65,13 +60,13 @@ def combine_data(
 
             data_list.append(
                 {
-                    'title': item.find('div', class_='ndm-result-title').get_text(),
-                    'product_id': item.find('div', class_='ndm-result-productid').get_text(),
+                    'title': item.find('div', class_='ndm-result-title').get_text(),  # noqa: E501
+                    'product_id': item.find('div', class_='ndm-result-productid').get_text(),  # noqa: E501
                     'former_id': tag_former_id and tag_former_id.get_text(),
                     'geo': tag_geo and tag_geo.get_text(),
                     'frequency': tag_frequency and tag_frequency.get_text(),
-                    'description': tag_description and tag_description.get_text(),
-                    'release_date': item.find('span', class_='ndm-result-date').get_text(),
+                    'description': tag_description and tag_description.get_text(),  # noqa: E501
+                    'release_date': item.find('span', class_='ndm-result-date').get_text(),  # noqa: E501
                     'type': item.find(
                         'div',
                         class_='ndm-result-productid'

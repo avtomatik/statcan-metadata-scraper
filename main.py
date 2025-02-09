@@ -6,7 +6,6 @@ Created on Thu Aug  5 21:59:20 2021
 @author: Alexander Mikhailov
 """
 
-
 # =============================================================================
 # STATCAN Sources Metadata Grabber through Web Scraping
 # =============================================================================
@@ -15,11 +14,11 @@ from datetime import date
 from pathlib import Path
 
 from core.funcs import build_preprocess_dataframe, combine_data
+from scraper.settings import DATA_DIR
 
 
 def main(
     file_name: str,
-    path_exp: str = '../data'
 ) -> None:
     """
     Main Function to Export Collected DataFrame to Excel File
@@ -27,20 +26,20 @@ def main(
     Parameters
     ----------
     excel_writer : str, optional
-        DESCRIPTION. The default is f'stat_can_data_sources-{date.today()}.xlsx'.
+        DESCRIPTION. The default is f'statcan_data_sources-{date.today()}.xlsx'. # noqa: E501
 
     Returns
     -------
     None
 
     """
-    Path(path_exp).mkdir(exist_ok=True)
+    Path(DATA_DIR).mkdir(exist_ok=True)
     build_preprocess_dataframe(combine_data()).to_excel(
-        excel_writer=Path(path_exp).joinpath(file_name),
+        excel_writer=Path(DATA_DIR).joinpath(file_name),
         index=False
     )
 
 
 if __name__ == '__main__':
-    file_name = f'stat_can_data_sources-{date.today()}.xlsx'
+    file_name = f'statcan_data_sources-{date.today()}.xlsx'
     main(file_name)
