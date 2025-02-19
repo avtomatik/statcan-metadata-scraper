@@ -14,7 +14,7 @@ from datetime import date
 from pathlib import Path
 
 from core.funcs import build_preprocess_dataframe, combine_data
-from scraper.settings import DATA_DIR
+from statcan_web_scraper.settings import DATA_DIR
 
 
 def main(

@@ -5,14 +5,13 @@ Created on Wed Sep  1 21:22:23 2021
 @author: Alexander Mikhailov
 """
 
-
 import os
 from pathlib import Path
 
 import pandas as pd
 from more_itertools import map_except
 
-from scraper.settings import DATA_DIR, STORAGE_DIR, URL_ROOT
+from statcan_web_scraper.settings import DATA_DIR, STORAGE_DIR, URL_ROOT
 
 
 def url_to_archive_name(url: str) -> str:

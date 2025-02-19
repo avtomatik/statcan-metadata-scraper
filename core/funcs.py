@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from scraper.settings import ENDPOINT
+from statcan_web_scraper.settings import ENDPOINT
 
 
 def get_number_of_sources() -> int:
