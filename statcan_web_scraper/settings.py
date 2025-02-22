@@ -108,7 +108,7 @@ FEED_EXPORT_ENCODING = 'utf-8'
 
 ALLOWED_DOMAINS = ['www150.statcan.gc.ca']
 
-SPIDER_NAME = 'example'
+SPIDER_NAME = 'base'
 
 START_URLS = ['https://www150.statcan.gc.ca/n1/']
 
