@@ -110,7 +110,7 @@ ALLOWED_DOMAINS = ['www150.statcan.gc.ca']
 
 SPIDER_NAME = 'base'
 
-START_URLS = ['https://www150.statcan.gc.ca/n1/']
+START_URLS = ['https://www150.statcan.gc.ca/n1/en/type/data']
 
 
 URL_ROOT = 'https://www150.statcan.gc.ca/n1/tbl/csv'

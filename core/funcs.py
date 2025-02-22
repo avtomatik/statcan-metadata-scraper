@@ -7,22 +7,6 @@ from bs4 import BeautifulSoup
 from statcan_web_scraper.settings import ENDPOINT
 
 
-def get_number_of_sources() -> int:
-    """
-    Retrieves Number of STATCAN Sources
-
-    Returns
-    -------
-    int
-        Number of STATCAN Sources.
-
-    """
-    page = requests.get(ENDPOINT)
-    soup = BeautifulSoup(page.text, 'lxml')
-    result = re.search(r'\((.*?)\)', soup.summary.get_text()).group(1)
-    return int(result.replace(',', ''))
-
-
 def combine_data(
     url_generic: str = '{ENDPOINT}?count={}&p={}-All#all',
     sources_per_page: int = 100,
