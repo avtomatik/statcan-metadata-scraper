@@ -8,8 +8,7 @@ Created on Wed Sep  1 21:22:23 2021
 from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
-from more_itertools import map_except
+from openpyxl import load_workbook
 
 from .core.config import DATA_DIR, DATA_EXTERNAL_PATH
 from .utils.filenames import url_to_archive_name
@@ -17,27 +16,42 @@ from .utils.filenames import url_to_archive_name
 
 def get_archive_names(file_name: str, path_src: Path = DATA_DIR) -> set[str]:
     """
-
+    Extract archive names from the 'ref' column of an Excel file,
+    converting URLs to standardized archive filenames.
 
     Parameters
     ----------
     file_name : str
-        DESCRIPTION.
-    path_src : str, optional
-        DESCRIPTION. The default is <DATA_DIR>.
+        The name of the Excel file to read.
+    path_src : Path, optional
+        Directory containing the Excel file. Defaults to DATA_DIR.
 
     Returns
     -------
     set[str]
-        DESCRIPTION.
-
+        A set of archive filenames.
     """
-    df = pd.read_excel(path_src / file_name)
-    return set(
-        map_except(
-            url_to_archive_name, df.loc[:, 'ref'], IndexError, ValueError
-        )
-    )
+    archive_names: set[str] = set()
+    workbook = load_workbook(path_src / file_name, read_only=True)
+    sheet = workbook.active
+
+    headers = [cell for cell in next(sheet.iter_rows(values_only=True))]
+    try:
+        ref_idx = headers.index('ref')
+    except ValueError as exc:
+        raise ValueError("No 'ref' column found in the Excel file") from exc
+
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        url = row[ref_idx]
+        if url is None:
+            continue
+        try:
+            archive_name = url_to_archive_name(url)
+            archive_names.add(archive_name)
+        except (IndexError, ValueError):
+            continue
+
+    return archive_names
 
 
 def snapshot_sort_key(filepath: Path):
