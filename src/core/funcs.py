@@ -1,24 +1,23 @@
 import re
-from datetime import date
 from pathlib import Path
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from .config import DATA_DIR
+from .config import DATA_DIR, PAGE_URL
 
 
 def get_number_of_sources(
-    url: str = 'https://www150.statcan.gc.ca/n1/en/type/data'
+    page_url: str = PAGE_URL
 ) -> int:
     """
     Retrieves Number of STATCAN Sources
 
     Parameters
     ----------
-    url : str, optional
-        Link. The default is 'https://www150.statcan.gc.ca/n1/en/type/data'.
+    page_url : str, optional
+        Link. The default is <PAGE_URL>.
 
     Returns
     -------
@@ -26,14 +25,14 @@ def get_number_of_sources(
         Number of STATCAN Sources.
 
     """
-    page = requests.get(url)
+    page = requests.get(page_url)
     soup = BeautifulSoup(page.text, 'lxml')
     result = re.search(r'\((.*?)\)', soup.summary.get_text()).group(1)
     return int(result.replace(',', ''))
 
 
 def combine_data(
-    url_generic: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
+    url_template: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
     sources_per_page: int = 100,
 ) -> list[dict]:
     """
@@ -41,7 +40,7 @@ def combine_data(
 
     Parameters
     ----------
-    url_generic : str, optional
+    url_template : str, optional
         DESCRIPTION. The default is 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all'.
     sources_per_page : int, optional
         DESCRIPTION. The default is 100.
@@ -51,13 +50,12 @@ def combine_data(
     list[dict]
 
     """
-    number_of_sources = get_number_of_sources()
+    total_pages = 1 + get_number_of_sources() // sources_per_page
     data_list = []
-    for _ in range(1 + number_of_sources // sources_per_page):
-        print(
-            f'Parsing Page {1 + _:3} Out of {1 + number_of_sources // sources_per_page}'
-        )
-        page = requests.get(url_generic.format(sources_per_page, _))
+
+    for _ in range(total_pages):
+        print(f'Parsing Page {1 + _:3} Out of {total_pages}')
+        page = requests.get(url_template.format(sources_per_page, _))
         soup = BeautifulSoup(page.text, 'lxml')
         details_soup = soup.find('details', id='all')
         items = details_soup.find_all('li', {'class': 'ndm-item'})
@@ -112,11 +110,6 @@ def build_preprocess_dataframe(data_list: list[dict]) -> pd.DataFrame:
         infer_datetime_format=False
     )
     return data.fillna('None')
-
-
-def get_default_filename() -> str:
-    """Generate a default Excel file name with today's date."""
-    return f'stat_can_data_sources-{date.today()}.xlsx'
 
 
 def export_statcan_data(file_name: str, export_dir: Path = DATA_DIR) -> None:

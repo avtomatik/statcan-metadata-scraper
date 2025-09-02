@@ -12,25 +12,8 @@ from pathlib import Path
 import pandas as pd
 from more_itertools import map_except
 
-from .core.config import DATA_DIR
-
-
-def url_to_archive_name(url: str) -> str:
-    """
-
-
-    Parameters
-    ----------
-    url : str
-        DESCRIPTION.
-
-    Returns
-    -------
-    str
-        DESCRIPTION.
-
-    """
-    return f'{url.split("?pid=")[1][:-2]}-eng.zip'
+from .core.config import DATA_DIR, DATA_EXTERNAL_PATH
+from .utils.filenames import url_to_archive_name
 
 
 def get_archive_names(file_name: str, path_src: Path = DATA_DIR) -> set[str]:
@@ -50,7 +33,7 @@ def get_archive_names(file_name: str, path_src: Path = DATA_DIR) -> set[str]:
         DESCRIPTION.
 
     """
-    df = pd.read_excel(Path(path_src).joinpath(file_name))
+    df = pd.read_excel(path_src / file_name)
     return set(map_except(url_to_archive_name, df.loc[:, 'ref'], IndexError))
 
 
@@ -81,13 +64,8 @@ def main(
     # Read File Generated with main() @src/main.py @https://github.com/avtomatik/statcan_parser
     # =========================================================================
 
-    # =========================================================================
-    # This Is Where You Store Your StanCan Archives:
-    # =========================================================================
-    PATH_STORAGE = 'data/external'
-
     snapshots_available = sorted(
-        filter(lambda _: _.endswith('.xlsx'), os.listdir(Path(path_src)))
+        filter(lambda _: _.endswith('.xlsx'), os.listdir(path_src))
     )
 
     archive_names_available = get_archive_names(snapshots_available[-1])
@@ -98,7 +76,7 @@ def main(
         set(
             filter(
                 lambda _: _.endswith('-eng.zip'),
-                os.listdir(Path(path_src).parent.joinpath(PATH_STORAGE))
+                os.listdir(DATA_EXTERNAL_PATH)
             )
         )
     }
