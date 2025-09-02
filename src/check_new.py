@@ -33,7 +33,11 @@ def get_archive_names(file_name: str, path_src: Path = DATA_DIR) -> set[str]:
 
     """
     df = pd.read_excel(path_src / file_name)
-    return set(map_except(url_to_archive_name, df.loc[:, 'ref'], IndexError))
+    return set(
+        map_except(
+            url_to_archive_name, df.loc[:, 'ref'], IndexError, ValueError
+        )
+    )
 
 
 def snapshot_sort_key(filepath: Path):
@@ -81,7 +85,7 @@ def main(
 
     snapshots_available = [
         f for f in path_src.iterdir() if f.suffix == '.xlsx'
-        ]
+    ]
     snapshots_available.sort(key=snapshot_sort_key)
 
     if not snapshots_available:
