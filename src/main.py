@@ -14,12 +14,13 @@ Created on Thu Aug  5 21:59:20 2021
 from datetime import date
 from pathlib import Path
 
-from core.funcs import build_preprocess_dataframe, combine_data
+from .core.config import DATA_DIR
+from .core.funcs import build_preprocess_dataframe, combine_data
 
 
 def main(
     file_name: str,
-    path_exp: str = '../data'
+    path_exp: Path = DATA_DIR
 ) -> None:
     """
     Main Function to Export Collected DataFrame to Excel File
@@ -34,7 +35,7 @@ def main(
     None
 
     """
-    Path(path_exp).mkdir(exist_ok=True)
+    path_exp.mkdir(exist_ok=True)
     build_preprocess_dataframe(combine_data()).to_excel(
         excel_writer=Path(path_exp).joinpath(file_name),
         index=False

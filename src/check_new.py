@@ -12,6 +12,8 @@ from pathlib import Path
 import pandas as pd
 from more_itertools import map_except
 
+from .core.config import DATA_DIR
+
 
 def url_to_archive_name(url: str) -> str:
     """
@@ -31,7 +33,7 @@ def url_to_archive_name(url: str) -> str:
     return f'{url.split("?pid=")[1][:-2]}-eng.zip'
 
 
-def get_archive_names(file_name: str, path_src: str = '../data') -> set[str]:
+def get_archive_names(file_name: str, path_src: Path = DATA_DIR) -> set[str]:
     """
 
 
@@ -40,7 +42,7 @@ def get_archive_names(file_name: str, path_src: str = '../data') -> set[str]:
     file_name : str
         DESCRIPTION.
     path_src : str, optional
-        DESCRIPTION. The default is '../data'.
+        DESCRIPTION. The default is <DATA_DIR>.
 
     Returns
     -------
@@ -54,7 +56,7 @@ def get_archive_names(file_name: str, path_src: str = '../data') -> set[str]:
 
 def main(
     check_option: str,
-    path_src: str = '../data',
+    path_src: Path = DATA_DIR,
     url_root: str = 'https://www150.statcan.gc.ca/n1/tbl/csv',
 ):
     """
@@ -66,7 +68,7 @@ def main(
         `snapshots': Check Two Excel Files;
         `downloaded': Check the Latest Excel File Against Downloaded Collection.
     path_src : str, optional
-        DESCRIPTION. The default is '../data'.
+        DESCRIPTION. The default is <DATA_DIR>.
     url_root : str, optional
         DESCRIPTION. The default is 'https://www150.statcan.gc.ca/n1/tbl/csv'.
 
