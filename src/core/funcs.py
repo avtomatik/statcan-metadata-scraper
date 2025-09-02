@@ -1,8 +1,12 @@
 import re
+from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+
+from .config import DATA_DIR
 
 
 def get_number_of_sources(
@@ -108,3 +112,30 @@ def build_preprocess_dataframe(data_list: list[dict]) -> pd.DataFrame:
         infer_datetime_format=False
     )
     return data.fillna('None')
+
+
+def get_default_filename() -> str:
+    """Generate a default Excel file name with today's date."""
+    return f'stat_can_data_sources-{date.today()}.xlsx'
+
+
+def export_statcan_data(file_name: str, export_dir: Path = DATA_DIR) -> None:
+    """
+    Collects, preprocesses, and exports STATCAN data to an Excel file.
+
+    Parameters
+    ----------
+    file_name : str
+        Name of the Excel file to create.
+    export_dir : Path, optional
+        Directory where the Excel file will be saved (default: DATA_DIR).
+
+    Returns
+    -------
+    None
+    """
+    export_dir.mkdir(parents=True, exist_ok=True)
+    output_path = export_dir / file_name
+
+    df = build_preprocess_dataframe(combine_data())
+    df.to_excel(output_path, index=False)
