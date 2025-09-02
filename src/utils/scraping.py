@@ -1,11 +1,9 @@
 import re
-from pathlib import Path
 
-import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from .config import DATA_DIR, PAGE_URL
+from src.core.config import PAGE_URL
 
 
 def fetch_number_of_sources(page_url: str = PAGE_URL) -> int:
@@ -78,68 +76,3 @@ def fetch_raw_data(
             )
     print('Parsing Complete')
     return records
-
-
-def make_dataframe(records: list[dict]) -> pd.DataFrame:
-    """
-    Convert raw records into a DataFrame without preprocessing.
-
-    Parameters
-    ----------
-    records : list[dict]
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    return pd.DataFrame.from_dict(records)
-
-
-def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Preprocess DataFrame (cleaning and transformations).
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    df = df.copy()
-
-    df[['id', 'title_only']] = df['title'].str.split(
-        pat='. ',
-        n=1,
-        expand=True,
-    )
-    df['id'] = pd.to_numeric(df['id'].str.replace(',', ''))
-    df['release_date'] = pd.to_datetime(
-        df['release_date'], infer_datetime_format=False)
-
-    return df.fillna('None')
-
-
-def export_dataframe(
-    df: pd.DataFrame,
-    file_name: str,
-    export_dir: Path = DATA_DIR
-) -> None:
-    """
-    Save DataFrame to an Excel file.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-    file_name : str
-        Name of the Excel file to create.
-    export_dir : Path, optional
-        Directory where the Excel file will be saved (default: DATA_DIR).
-    Returns
-    -------
-    None
-    """
-    export_dir.mkdir(parents=True, exist_ok=True)
-    output_path = export_dir / file_name
-    df.to_excel(output_path, index=False)
