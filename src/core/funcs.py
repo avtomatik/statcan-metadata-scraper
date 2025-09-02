@@ -8,22 +8,19 @@ from bs4 import BeautifulSoup
 from .config import DATA_DIR, PAGE_URL
 
 
-def get_number_of_sources(
-    page_url: str = PAGE_URL
-) -> int:
+def fetch_number_of_sources(page_url: str = PAGE_URL) -> int:
     """
-    Retrieves Number of STATCAN Sources
+    Fetch the number of STATCAN sources available.
 
     Parameters
     ----------
     page_url : str, optional
-        Link. The default is <PAGE_URL>.
+        URL of the STATCAN data page (default: PAGE_URL).
 
     Returns
     -------
     int
-        Number of STATCAN Sources.
-
+        Total number of sources.
     """
     page = requests.get(page_url)
     soup = BeautifulSoup(page.text, 'lxml')
@@ -31,41 +28,42 @@ def get_number_of_sources(
     return int(result.replace(',', ''))
 
 
-def combine_data(
+def fetch_raw_data(
     url_template: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
     sources_per_page: int = 100,
 ) -> list[dict]:
     """
-    Collects Data List
+    Fetch raw data records from STATCAN.
 
     Parameters
     ----------
     url_template : str, optional
-        DESCRIPTION. The default is 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all'.
+        URL template for paginated STATCAN data.
     sources_per_page : int, optional
-        DESCRIPTION. The default is 100.
+        Number of sources per page (default: 100).
 
     Returns
     -------
     list[dict]
-
+        List of raw data records.
     """
-    total_pages = 1 + get_number_of_sources() // sources_per_page
-    data_list = []
+    total_pages = 1 + fetch_number_of_sources() // sources_per_page
+    records = []
 
-    for _ in range(total_pages):
-        print(f'Parsing Page {1 + _:3} Out of {total_pages}')
-        page = requests.get(url_template.format(sources_per_page, _))
+    for page_idx in range(total_pages):
+        print(f'Parsing Page {page_idx + 1:3} of {total_pages}')
+        page = requests.get(url_template.format(sources_per_page, page_idx))
         soup = BeautifulSoup(page.text, 'lxml')
         details_soup = soup.find('details', id='all')
         items = details_soup.find_all('li', {'class': 'ndm-item'})
+
         for item in items:
             tag_description = item.find('div', class_='ndm-result-description')
             tag_former_id = item.find('div', class_='ndm-result-formerid')
             tag_frequency = item.find('div', class_='ndm-result-freq')
             tag_geo = item.find('div', class_='ndm-result-geo')
 
-            data_list.append(
+            records.append(
                 {
                     'title': item.find('div', class_='ndm-result-title').get_text(),
                     'product_id': item.find('div', class_='ndm-result-productid').get_text(),
@@ -74,61 +72,74 @@ def combine_data(
                     'frequency': tag_frequency and tag_frequency.get_text(),
                     'description': tag_description and tag_description.get_text(),
                     'release_date': item.find('span', class_='ndm-result-date').get_text(),
-                    'type': item.find(
-                        'div',
-                        class_='ndm-result-productid'
-                    ).get_text().split(':')[0],
+                    'type': item.find('div', class_='ndm-result-productid').get_text().split(':')[0],
                     'ref': item.a.get('href'),
                 }
             )
     print('Parsing Complete')
-    return data_list
+    return records
 
 
-def build_preprocess_dataframe(data_list: list[dict]) -> pd.DataFrame:
+def make_dataframe(records: list[dict]) -> pd.DataFrame:
     """
-    Builds DataFrame from Collected Data List
+    Convert raw records into a DataFrame without preprocessing.
 
     Parameters
     ----------
-    data_list : list[dict]
+    records : list[dict]
 
     Returns
     -------
     pd.DataFrame
-
     """
-    data = pd.DataFrame.from_dict(data_list)
-    data[['id', 'title_only']] = data['title'].str.split(
-        pat='. ',
-        n=1,
-        expand=True
-    )
-    data['id'] = pd.to_numeric(data['id'].str.replace(',', ''))
-    data['release_date'] = pd.to_datetime(
-        data['release_date'],
-        infer_datetime_format=False
-    )
-    return data.fillna('None')
+    return pd.DataFrame.from_dict(records)
 
 
-def export_statcan_data(file_name: str, export_dir: Path = DATA_DIR) -> None:
+def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Collects, preprocesses, and exports STATCAN data to an Excel file.
+    Preprocess DataFrame (cleaning and transformations).
 
     Parameters
     ----------
+    df : pd.DataFrame
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    df = df.copy()
+
+    df[['id', 'title_only']] = df['title'].str.split(
+        pat='. ',
+        n=1,
+        expand=True,
+    )
+    df['id'] = pd.to_numeric(df['id'].str.replace(',', ''))
+    df['release_date'] = pd.to_datetime(
+        df['release_date'], infer_datetime_format=False)
+
+    return df.fillna('None')
+
+
+def export_dataframe(
+    df: pd.DataFrame,
+    file_name: str,
+    export_dir: Path = DATA_DIR
+) -> None:
+    """
+    Save DataFrame to an Excel file.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
     file_name : str
         Name of the Excel file to create.
     export_dir : Path, optional
         Directory where the Excel file will be saved (default: DATA_DIR).
-
     Returns
     -------
     None
     """
     export_dir.mkdir(parents=True, exist_ok=True)
     output_path = export_dir / file_name
-
-    df = build_preprocess_dataframe(combine_data())
     df.to_excel(output_path, index=False)
