@@ -1,78 +1,34 @@
-import re
+import asyncio
 
-import requests
-from bs4 import BeautifulSoup
+from scrapy import signals
+from scrapy.crawler import CrawlerRunner
+from scrapy.signalmanager import dispatcher
+from twisted.internet import reactor
 
-from src.core.config import PAGE_URL
+from src.spiders.statcan_spider import StatCanSpider
 
 
-def fetch_number_of_sources(page_url: str = PAGE_URL) -> int:
+def fetch_raw_data() -> list[dict]:
     """
-    Fetch the number of STATCAN sources available.
-
-    Parameters
-    ----------
-    page_url : str, optional
-        URL of the STATCAN data page (default: PAGE_URL).
-
-    Returns
-    -------
-    int
-        Total number of sources.
+    Run the Scrapy spider programmatically and return collected records.
     """
-    page = requests.get(page_url)
-    soup = BeautifulSoup(page.text, 'lxml')
-    result = re.search(r'\((.*?)\)', soup.summary.get_text()).group(1)
-    return int(result.replace(',', ''))
+    results: list[dict] = []
 
+    def _item_collected(item, response, spider):
+        results.append(dict(item))
 
-def fetch_raw_data(
-    url_template: str = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all',
-    sources_per_page: int = 100,
-) -> list[dict]:
-    """
-    Fetch raw data records from STATCAN.
+    dispatcher.connect(_item_collected, signal=signals.item_passed)
+    runner = CrawlerRunner()
 
-    Parameters
-    ----------
-    url_template : str, optional
-        URL template for paginated STATCAN data.
-    sources_per_page : int, optional
-        Number of sources per page (default: 100).
+    async def crawl():
+        await runner.crawl(StatCanSpider)
 
-    Returns
-    -------
-    list[dict]
-        List of raw data records.
-    """
-    total_pages = 1 + fetch_number_of_sources() // sources_per_page
-    records = []
+    # Run Scrapy inside Twisted's reactor
+    try:
+        asyncio.get_event_loop().run_until_complete(crawl())
+    except RuntimeError:
+        # Fallback for environments where event loop is already running
+        reactor.callWhenRunning(crawl)
+        reactor.run()
 
-    for page_idx in range(total_pages):
-        print(f'Parsing Page {page_idx + 1:3} of {total_pages}')
-        page = requests.get(url_template.format(sources_per_page, page_idx))
-        soup = BeautifulSoup(page.text, 'lxml')
-        details_soup = soup.find('details', id='all')
-        items = details_soup.find_all('li', {'class': 'ndm-item'})
-
-        for item in items:
-            tag_description = item.find('div', class_='ndm-result-description')
-            tag_former_id = item.find('div', class_='ndm-result-formerid')
-            tag_frequency = item.find('div', class_='ndm-result-freq')
-            tag_geo = item.find('div', class_='ndm-result-geo')
-
-            records.append(
-                {
-                    'title': item.find('div', class_='ndm-result-title').get_text(),
-                    'product_id': item.find('div', class_='ndm-result-productid').get_text(),
-                    'former_id': tag_former_id and tag_former_id.get_text(),
-                    'geo': tag_geo and tag_geo.get_text(),
-                    'frequency': tag_frequency and tag_frequency.get_text(),
-                    'description': tag_description and tag_description.get_text(),
-                    'release_date': item.find('span', class_='ndm-result-date').get_text(),
-                    'type': item.find('div', class_='ndm-result-productid').get_text().split(':')[0],
-                    'ref': item.a.get('href'),
-                }
-            )
-    print('Parsing Complete')
-    return records
+    return results

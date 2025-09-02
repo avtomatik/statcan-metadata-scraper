@@ -16,7 +16,7 @@ from src.utils.io import download_archives
 from src.utils.snapshots import check_new_archives
 
 from .core.config import DATA_DIR, INTERVAL_HOURS
-from .core.pipeline import run_pipeline
+from .utils.pipeline import run_pipeline
 
 
 def main_loop() -> None:
