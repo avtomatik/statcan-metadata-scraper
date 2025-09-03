@@ -7,7 +7,7 @@ from .filenames import url_to_archive_name
 
 def extract_archive_names_from_excel(file_path: Path) -> set[str]:
     """
-    Extract archive names from the 'ref' column of an Excel file,
+    Extract archive names from the 'url' column of an Excel file,
     converting URLs to standardized archive filenames.
     """
     archive_names: set[str] = set()
@@ -16,12 +16,12 @@ def extract_archive_names_from_excel(file_path: Path) -> set[str]:
 
     headers = list(next(sheet.iter_rows(values_only=True)))
     try:
-        ref_column_index = headers.index('ref')
+        url_column_index = headers.index('url')
     except ValueError as exc:
-        raise ValueError("No 'ref' column found in the Excel file") from exc
+        raise ValueError("No 'url' column found in the Excel file") from exc
 
     for row in sheet.iter_rows(min_row=2, values_only=True):
-        url = row[ref_column_index]
+        url = row[url_column_index]
         if url is None:
             continue
         try:

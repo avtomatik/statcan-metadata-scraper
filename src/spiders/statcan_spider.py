@@ -57,5 +57,5 @@ class StatCanSpider(scrapy.Spider):
                 'description': item.css('.ndm-result-description::text').get(default=''),
                 'release_date': item.css('.ndm-result-date::text').get(),
                 'type': item.css('.ndm-result-productid::text').get().split(':')[0],
-                'ref': item.css('a::attr(href)').get(),
+                'url': item.css('a::attr(href)').get(),
             }
