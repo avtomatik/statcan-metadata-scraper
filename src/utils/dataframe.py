@@ -30,6 +30,9 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
+    if 'title' not in df.columns:
+        df['title'] = 'None'
+
     split_cols = df['title'].str.split(pat='. ', n=1, expand=True)
 
     df['id'] = pd.to_numeric(
