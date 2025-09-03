@@ -5,21 +5,27 @@ from src.core.config import PAGE_URL
 
 class StatCanSpider(scrapy.Spider):
     name = 'statcan'
+    allowed_domains = ['www150.statcan.gc.ca']
 
     def start_requests(self):
-        yield scrapy.Request(PAGE_URL)
+        yield scrapy.Request(PAGE_URL, callback=self.parse_total_sources)
 
-    def parse(self, response):
-        # Extract total pages
-        total_sources = int(response.css('summary::text').re_first(
-            r'\(([\d,]+)\)').replace(',', '')
-        )
+    def parse_total_sources(self, response):
+        # Extract number inside parentheses, e.g. "(12,345)"
+        summary_text = response.css('summary::text').get()
+        total_sources = int(summary_text.strip().split(
+            '(')[1].split(')')[0].replace(',', ''))
+
         sources_per_page = 100
         total_pages = 1 + total_sources // sources_per_page
 
+        url_template = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all'
+
         for page_idx in range(total_pages):
-            url = f'https://www150.statcan.gc.ca/n1/en/type/data?count={sources_per_page}&p={page_idx}-All#all'
-            yield scrapy.Request(url, callback=self.parse_page)
+            yield scrapy.Request(
+                url_template.format(sources_per_page, page_idx),
+                callback=self.parse_page,
+            )
 
     def parse_page(self, response):
         items = response.css('details#all li.ndm-item')

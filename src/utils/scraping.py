@@ -1,9 +1,5 @@
-import asyncio
-
-from scrapy import signals
-from scrapy.crawler import CrawlerRunner
-from scrapy.signalmanager import dispatcher
-from twisted.internet import reactor
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
 
 from src.spiders.statcan_spider import StatCanSpider
 
@@ -11,24 +7,28 @@ from src.spiders.statcan_spider import StatCanSpider
 def fetch_raw_data() -> list[dict]:
     """
     Run the Scrapy spider programmatically and return collected records.
+
+    Returns
+    -------
+    list[dict]
+        List of raw data records scraped from StatCan.
     """
     results: list[dict] = []
 
-    def _item_collected(item, response, spider):
-        results.append(dict(item))
+    class CollectorPipeline:
+        def process_item(self, item, spider):
+            results.append(dict(item))
+            return item
 
-    dispatcher.connect(_item_collected, signal=signals.item_passed)
-    runner = CrawlerRunner()
+    process = CrawlerProcess(
+        settings={
+            **get_project_settings(),
+            'ITEM_PIPELINES': {CollectorPipeline: 100},
+            'LOG_ENABLED': False,
+        }
+    )
 
-    async def crawl():
-        await runner.crawl(StatCanSpider)
-
-    # Run Scrapy inside Twisted's reactor
-    try:
-        asyncio.get_event_loop().run_until_complete(crawl())
-    except RuntimeError:
-        # Fallback for environments where event loop is already running
-        reactor.callWhenRunning(crawl)
-        reactor.run()
+    process.crawl(StatCanSpider)
+    process.start()
 
     return results
