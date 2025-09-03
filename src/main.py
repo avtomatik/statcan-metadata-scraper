@@ -19,7 +19,7 @@ Created on Thu Aug  5 21:59:20 2021
 import time
 import traceback
 
-from src.core.config import DATA_DIR, INTERVAL_HOURS
+from src.spiders.settings import DATA_DIR, INTERVAL_HOURS
 from src.utils.io import download_archives
 from src.utils.pipeline import run_pipeline
 from src.utils.snapshots import check_new_archives

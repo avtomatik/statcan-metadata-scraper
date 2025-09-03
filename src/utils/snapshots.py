@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from src.core.config import DATA_DIR, URL_BASE
+from src.spiders.settings import DATA_DIR, URL_BASE
 
 from .excel import extract_archive_names_from_excel
 

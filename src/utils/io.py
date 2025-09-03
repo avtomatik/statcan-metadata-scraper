@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from src.core.config import DATA_DIR, DATA_EXTERNAL_PATH, URL_BASE
+from src.spiders.settings import DATA_DIR, DATA_EXTERNAL_PATH, URL_BASE
 
 
 def export_dataframe(
