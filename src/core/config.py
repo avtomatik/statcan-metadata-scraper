@@ -11,3 +11,5 @@ PAGE_URL = 'https://www150.statcan.gc.ca/n1/en/type/data'
 URL_BASE = 'https://www150.statcan.gc.ca/n1/tbl/csv'
 
 INTERVAL_HOURS = 12
+
+ITEMS_PER_PAGE = 100

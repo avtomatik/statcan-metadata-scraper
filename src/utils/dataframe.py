@@ -30,13 +30,18 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    df[['id', 'title_only']] = df['title'].str.split(
-        pat='. ',
-        n=1,
-        expand=True,
+    split_cols = df['title'].str.split(pat='. ', n=1, expand=True)
+
+    df['id'] = pd.to_numeric(
+        split_cols[0].str.replace(',', ''),
+        errors='coerce'
     )
-    df['id'] = pd.to_numeric(df['id'].str.replace(',', ''))
-    df['release_date'] = pd.to_datetime(
-        df['release_date'], infer_datetime_format=False)
+
+    if 1 in split_cols.columns:
+        df['title_only'] = split_cols[1].fillna(df['title'])
+    else:
+        df['title_only'] = df['title']
+
+    df['release_date'] = pd.to_datetime(df['release_date'], errors='coerce')
 
     return df.fillna('None')

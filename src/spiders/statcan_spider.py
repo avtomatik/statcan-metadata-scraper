@@ -1,6 +1,6 @@
 import scrapy
 
-from src.core.config import PAGE_URL
+from src.core.config import ITEMS_PER_PAGE, PAGE_URL
 
 
 class StatCanSpider(scrapy.Spider):
@@ -11,19 +11,18 @@ class StatCanSpider(scrapy.Spider):
         yield scrapy.Request(PAGE_URL, callback=self.parse_total_sources)
 
     def parse_total_sources(self, response):
-        # Extract number inside parentheses, e.g. "(12,345)"
         summary_text = response.css('summary::text').get()
-        total_sources = int(summary_text.strip().split(
-            '(')[1].split(')')[0].replace(',', ''))
+        total_sources = int(
+            summary_text.strip().split('(')[1].split(')')[0].replace(',', '')
+        )
 
-        sources_per_page = 100
-        total_pages = 1 + total_sources // sources_per_page
+        total_pages = 1 + total_sources // ITEMS_PER_PAGE
 
         url_template = 'https://www150.statcan.gc.ca/n1/en/type/data?count={}&p={}-All#all'
 
         for page_idx in range(total_pages):
             yield scrapy.Request(
-                url_template.format(sources_per_page, page_idx),
+                url_template.format(ITEMS_PER_PAGE, page_idx),
                 callback=self.parse_page,
             )
 
